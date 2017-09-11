@@ -1700,6 +1700,7 @@ public abstract class PluginManager extends AbstractModelObject implements OnMas
                 if (toInstall.isForNewerHudson()) {
                     LOGGER.log(WARNING, "{0}@{1} was built for a newer Jenkins", new Object[] {toInstall.name, toInstall.version});
                 }
+                // TODO check Java dependency
                 jobs.add(toInstall.deploy(true));
             } else if (pw.isOlderThan(requestedPlugin.getValue())) { // upgrade
                 UpdateSite.Plugin toInstall = uc.getPlugin(requestedPlugin.getKey());
@@ -1717,6 +1718,7 @@ public abstract class PluginManager extends AbstractModelObject implements OnMas
                 if (toInstall.isForNewerHudson()) {
                     LOGGER.log(WARNING, "{0}@{1} was built for a newer Jenkins", new Object[] {toInstall.name, toInstall.version});
                 }
+                // TODO check Java dependency
                 if (!toInstall.isCompatibleWithInstalledVersion()) {
                     LOGGER.log(WARNING, "{0}@{1} is incompatible with the installed @{2}", new Object[] {toInstall.name, toInstall.version, pw.getVersion()});
                 }
