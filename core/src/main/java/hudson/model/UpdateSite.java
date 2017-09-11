@@ -930,6 +930,13 @@ public class UpdateSite {
         @Exported
         public final String requiredCore;
         /**
+         * Version of Java this plugin requires to run.
+         *
+         * @since TODO
+         */
+        @Exported
+        public final String minimumJavaVersion;
+        /**
          * Categories for grouping plugins, taken from labels assigned to wiki page.
          * Can be null.
          */
@@ -955,6 +962,8 @@ public class UpdateSite {
             this.title = get(o,"title");
             this.excerpt = get(o,"excerpt");
             this.compatibleSinceVersion = get(o,"compatibleSinceVersion");
+            this.minimumJavaVersion = get(o,"minimumJavaVersion");
+
             this.requiredCore = get(o,"requiredCore");
             this.categories = o.has("labels") ? (String[])o.getJSONArray("labels").toArray(new String[0]) : null;
             for(Object jo : o.getJSONArray("dependencies")) {
@@ -1079,6 +1088,19 @@ public class UpdateSite {
             }
         }
 
+        /**
+         * @since TODO
+         * @return
+         */
+        public boolean isForNewerJava() {
+            try {
+                return minimumJavaVersion != null && new VersionNumber(minimumJavaVersion).isNewerThan(
+                        new VersionNumber(System.getProperty("java.version")));
+            } catch (NumberFormatException nfe) {
+                return false; // plugin doesn't declare a minimum Java version
+            }
+        }
+
         public VersionNumber getNeededDependenciesRequiredCore() {
             VersionNumber versionNumber = null;
             try {
@@ -1093,9 +1115,41 @@ public class UpdateSite {
             return versionNumber;
         }
 
+        /**
+         * @since TODO
+         * @return
+         */
+        public VersionNumber getNeededDependenciesRequiredJava() {
+            VersionNumber versionNumber = null;
+            try {
+                versionNumber = minimumJavaVersion == null ? null : new VersionNumber(minimumJavaVersion);
+            } catch (NumberFormatException nfe) {
+                // unable to parse version
+            }
+            for (Plugin p: getNeededDependencies()) {
+                VersionNumber v = p.getNeededDependenciesRequiredJava();
+                if (v == null) {
+                    continue;
+                }
+                if (versionNumber == null || v.isNewerThan(versionNumber)) {
+                    versionNumber = v;
+                }
+            }
+            return versionNumber;
+        }
+
         public boolean isNeededDependenciesForNewerJenkins() {
             for (Plugin p: getNeededDependencies()) {
                 if (p.isForNewerHudson() || p.isNeededDependenciesForNewerJenkins()) return true;
+            }
+            return false;
+        }
+
+        public boolean isNeededDependenciesForNewerJava() {
+            for (Plugin p: getNeededDependencies()) {
+                if (p.isForNewerJava() || p.isNeededDependenciesForNewerJava()) {
+                    return true;
+                }
             }
             return false;
         }
